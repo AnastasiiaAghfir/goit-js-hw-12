@@ -41,7 +41,6 @@ form.addEventListener("submit", async event => {
 
   try {
     const data = await getImagesByQuery(currentQuery, currentPage);
-
     totalHits = data.totalHits;
 
     if (data.hits.length === 0) {
@@ -55,9 +54,18 @@ form.addEventListener("submit", async event => {
 
     createGallery(data.hits);
 
-    if (totalHits > PER_PAGE) {
-      showLoadMoreButton();
+    const totalPages = Math.ceil(totalHits / PER_PAGE);
+
+    if (totalPages === 1) {
+      iziToast.info({
+        message:
+          "We're sorry, but you've reached the end of search results.",
+        position: "topRight",
+      });
+      return;
     }
+
+    showLoadMoreButton();
   } catch (error) {
     iziToast.error({
       message: "Something went wrong.",
@@ -72,22 +80,34 @@ form.addEventListener("submit", async event => {
 
 loadMoreBtn.addEventListener("click", async () => {
   currentPage += 1;
+
+  hideLoadMoreButton();
   showLoader();
 
   try {
     const data = await getImagesByQuery(currentQuery, currentPage);
+
+    if (data.hits.length === 0) {
+      iziToast.info({
+        message:
+          "We're sorry, but you've reached the end of search results.",
+        position: "topRight",
+      });
+      return;
+    }
 
     createGallery(data.hits);
 
     const totalPages = Math.ceil(totalHits / PER_PAGE);
 
     if (currentPage >= totalPages) {
-      hideLoadMoreButton();
       iziToast.info({
         message:
           "We're sorry, but you've reached the end of search results.",
         position: "topRight",
       });
+    } else {
+      showLoadMoreButton();
     }
 
     const { height } = document
